@@ -1,5 +1,5 @@
 if __name__ == "__main__":
-    filename = 'data1.set'
+    filename = 'data2.set'
     
     try:
         n = int(input("Enter the number of integers to read: "))
