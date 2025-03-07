@@ -3,6 +3,8 @@ file2 = "/home/orangepi/nfsshare/data2.set_validate_1000.txt"
 
 output_file = "/home/orangepi/nfsshare/output.txt"
 
+print("Merging sorted files " + file1 + " and " + file2 + " to output file " + output_file)
+
 sortedlists = [[],[]]
 
 with open(file1, 'r') as file:
@@ -14,7 +16,6 @@ with open(file2, 'r') as file:
     for line in file:
         line = line.strip()
         sortedlists[1].append(int(line))
-
 
 finallist = []
 emptycount = 0
@@ -36,3 +37,6 @@ while emptycount < len(sortedlists):
 with open(output_file, 'w') as file:
     for number in finallist:
         file.write(f"{number}\n")
+
+
+print("Done")
