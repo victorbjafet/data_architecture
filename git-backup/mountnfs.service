@@ -1,0 +1,12 @@
+[Unit]
+Description=MountNFS
+After=network-online.target remote-fs.target nfs-client.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/home/orangepi/mountnfs.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
