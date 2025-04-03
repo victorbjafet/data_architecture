@@ -1,49 +1,89 @@
 import os.path
 import sys
 
-def get_chunk(filename, chunk_number, chunk_size):
+def get_chunk_start_index(filename, chunk_number, chunk_size):
     try:
-        with open(filename, 'r') as file:
-            file.seek(chunk_size * chunk_number)
-            chunk_data = file.read(chunk_size)
-
-            lines = chunk_data.split('\n')
-            if chunk_data and file.tell() != os.fstat(file.fileno()).st_size:
-                last_line = lines.pop() #removes end number
-                file.seek(file.tell() - len(last_line))
-            
-            for line in lines:
-                if line.strip().isdigit():
-                    print(line.strip())
+        with open(filename, 'rb') as file:
+            bindex = 0 #starting index of the file, cursor is before first byte
+            findex = 0 #where the index of the chunk start will be stored
+            for i in range(chunk_number): #calculate where each chunk ends one at a time
+                print("Chunk " + str(i))
+                bindex += chunk_size - 1 #right before the last byte of the chunk
+                file.seek(bindex) #puts the cursor there 
+                offset = 0 #how many bytes behind the end of the theoretical chunk the newline is
+                chunk_data = file.read(1) #read last byte of chunk
+                while chunk_data != b'\n': #checks if the last read byte is a newline
+                    file.seek(-2, 1) #puts the cursor back 2 bytes
+                    offset -= 1 #changes offset accordingly
+                    print("Char: " + str(chunk_data))
+                    print("Offset: " + str(offset))
+                    chunk_data = file.read(1) #reads one byte moving the cursor up a byte (net movement one byte)
+                bindex += offset #adjusts the current index based on calculated offset
+                print("Current index: " + str(bindex))
+                if i == chunk_number - 2:
+                    findex = bindex
+        print(findex, bindex)
+        print("Index discovery done")
+        return (findex, bindex) 
     except Exception as e:
-        print("Error reading chunk:", e)
+        print("Error calculating chunk start index", e)
 
-args = sys.argv[1:]
 
-if len(args) != 3:
-    print("Usage: python {} <filename> <chunk_number> <chunk_size_in_bytes>".format(sys.argv[0]))
-    exit(1)
+def get_chunk(filename, chunk_number, chunk_size):
+    sindex, eindex = get_chunk_start_index(filename, chunk_number, chunk_size) 
+#    try:
+    with open(filename, 'r') as file:
+        file.seek(sindex)
+        chunk_str = file.read(eindex-sindex)
+        print(chunk_str)
+        ints_list = chunk_str.strip().split("\n")
+        print(ints_list)
+        for i in range(len(ints_list)):
+           ints_list[i] = int(ints_list[i].strip())
+        print(ints_list)
+        return ints_list
+#    except Exception as e:
+#        pass
+#        print("Error reading chunk", e)     
 
-filename = sys.argv[1]
+
+
+
+
+
+            
+filename = "/home/orangepi/nfsshare/data1.set"
 
 if not os.path.exists(filename):
     print("File \"{}\" does not exist".format(filename))
     exit(1)
 
 try:
-    chunk_number = int(sys.argv[2])
+    chunk_number = int(input("Chunk number: "))
 except ValueError:
     print("Error: chunk_number \"{}\" is not an integer".format(sys.argv[2]))
     exit(1)
 
 try:
-    chunk_size = int(sys.argv[3])
+    chunk_size = int(input("Chunk size: "))
 except ValueError:
     print("Error: chunk_size \"{}\" is not an integer".format(sys.argv[3]))
     exit(1)
 
-if chunk_size < 10:
-    print("Error: chunk_size must be > 10")
+if chunk_size < 20:
+    print("Error: chunk_size must be > 20")
     exit(1)
 
-get_chunk(filename, chunk_number, chunk_size)
+
+
+output = "chunk_test.txt"
+
+for i in range(chunk_number):
+    if i == 0:
+        with open(output, 'w') as file:
+            pass
+    with open(output, 'a') as file:
+        int_array = get_chunk(filename, i + 1, chunk_size)
+        for num in int_array:
+            file.write(str(num) + "\n")
+
