@@ -1,13 +1,15 @@
 import os.path
 import sys
 
-def get_chunk_start_index(filename, chunk_number, chunk_size):
+def get_chunk_indices(filename, relative_chunk_number, chunk_size, start_index):
+    print(relative_chunk_number, chunk_size, start_index)
     try:
         with open(filename, 'rb') as file:
-            bindex = 0 #starting index of the file, cursor is before first byte
-            findex = 0 #where the index of the chunk start will be stored
-            for i in range(chunk_number): #calculate where each chunk ends one at a time
-                print("Chunk " + str(i))
+            #the point of having a start index is to optimize finding chunks, preventing needing to calculate every chunk from start to end of file each time if you already calculated a certain amount and know their end index
+            bindex = start_index #starting index of the chunk calculation, 0 for beginning of file. cursor should be before first byte of chunk
+            findex = start_index #where the index of the chunk start will be stored
+            for i in range(relative_chunk_number): #calculate where each chunk ends one at a time
+                print("Chunk " + str(i + 1))
                 bindex += chunk_size - 1 #right before the last byte of the chunk
                 file.seek(bindex) #puts the cursor there 
                 offset = 0 #how many bytes behind the end of the theoretical chunk the newline is
@@ -18,33 +20,33 @@ def get_chunk_start_index(filename, chunk_number, chunk_size):
                     print("Char: " + str(chunk_data))
                     print("Offset: " + str(offset))
                     chunk_data = file.read(1) #reads one byte moving the cursor up a byte (net movement one byte)
-                bindex += offset #adjusts the current index based on calculated offset
+                bindex += offset + 1 #adjusts the current index based on calculated offset (add one as well to account that bindex is the index of last byte and we want index of newline after byte)
                 print("Current index: " + str(bindex))
-                if i == chunk_number - 2:
-                    findex = bindex
+                if i == relative_chunk_number - 2:
+                    findex = bindex + 1
         print(findex, bindex)
         print("Index discovery done")
-        return (findex, bindex) 
+        return (findex, bindex) #inclusive, non inclusive (index of first byte in chunk, index of newline after last byte in chunk) 
     except Exception as e:
         print("Error calculating chunk start index", e)
 
 
-def get_chunk(filename, chunk_number, chunk_size):
-    sindex, eindex = get_chunk_start_index(filename, chunk_number, chunk_size) 
-#    try:
-    with open(filename, 'r') as file:
-        file.seek(sindex)
-        chunk_str = file.read(eindex-sindex)
-        print(chunk_str)
-        ints_list = chunk_str.strip().split("\n")
-        print(ints_list)
-        for i in range(len(ints_list)):
-           ints_list[i] = int(ints_list[i].strip())
-        print(ints_list)
-        return ints_list
-#    except Exception as e:
-#        pass
-#        print("Error reading chunk", e)     
+def get_chunk(filename, relative_chunk_number, chunk_size, start_index):
+    findex, bindex = get_chunk_indices(filename, relative_chunk_number, chunk_size, start_index)
+    #print(findex, bindex) 
+    try:
+        with open(filename, 'r') as file:
+            file.seek(findex)
+            chunk_str = file.read(bindex-findex)
+            #print(chunk_str)
+            ints_list = chunk_str.strip().split("\n")
+            #print(ints_list)
+            for i in range(len(ints_list)):
+               ints_list[i] = int(ints_list[i].strip())
+            #print(ints_list)
+            return bindex, ints_list
+    except Exception as e:
+        print("Error reading chunk", e)     
 
 
 
@@ -78,12 +80,19 @@ if chunk_size < 20:
 
 output = "chunk_test.txt"
 
+
+
+end_index = -1
+
 for i in range(chunk_number):
     if i == 0:
         with open(output, 'w') as file:
             pass
     with open(output, 'a') as file:
-        int_array = get_chunk(filename, i + 1, chunk_size)
+        end_index, int_array = get_chunk(filename, 1, chunk_size, end_index + 1) #end index + 1 because that is the position for the cursor to be before the first byte of the next chunk
+        print(end_index)
+        print()
+        print(int_array)
         for num in int_array:
             file.write(str(num) + "\n")
 
