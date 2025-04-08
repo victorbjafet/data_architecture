@@ -1,5 +1,11 @@
-data1.set*
-data2.set*
+datasets/*
+!datasets/.gitkeep
+outputs/*
+!outputs/.gitkeep
+sorted_chunks/*
+!sorted_chunks/.gitkeep
+
 System*Volume*Information/
-output.txt
 isos/
+*pycache*
+*.swp
