@@ -15,6 +15,8 @@ def get_chunk_indices(filename, relative_chunk_number, chunk_size, start_index):
                 offset = 0 #how many bytes behind the end of the theoretical chunk the newline is
                 chunk_data = file.read(1) #read last byte of chunk
                 while chunk_data != b'\n': #checks if the last read byte is a newline
+                    if chunk_data == b'':
+                        raise Exception("Reached end of file")
                     file.seek(-2, 1) #puts the cursor back 2 bytes
                     offset -= 1 #changes offset accordingly
                     #print("Char: " + str(chunk_data))
@@ -29,10 +31,14 @@ def get_chunk_indices(filename, relative_chunk_number, chunk_size, start_index):
         return (findex, bindex) #inclusive, non inclusive (index of first byte in chunk, index of newline after last byte in chunk) 
     except Exception as e:
         print("Error calculating chunk start index", e)
+        raise Exception(str(e))
 
 
 def get_chunk(filename, relative_chunk_number, chunk_size, start_index):
-    findex, bindex = get_chunk_indices(filename, relative_chunk_number, chunk_size, start_index)
+    try:
+        findex, bindex = get_chunk_indices(filename, relative_chunk_number, chunk_size, start_index)
+    except Exception as e:
+        raise Exception("Failed get_chunk_indices in get_chunk: get_chunk_indices(" + filename + ", " + str(relative_chunk_number) + ", " + str(chunk_size) + ", " + str(start_index) + ") returns error " + str(e) + " | Check that NFS is working on dispy nodes")
     #print(findex, bindex) 
     try:
         with open(filename, 'r') as file:

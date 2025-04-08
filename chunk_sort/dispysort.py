@@ -1,6 +1,7 @@
 import multiprocessing
 import time
 import dispy
+import os
 
 
 def dworker(filename, chunk_number, chunk_size, use_multiprocessing):
@@ -101,7 +102,7 @@ if __name__ == "__main__":
     input_file = "/home/orangepi/nfsshare/datasets/data1.set"
     output_file = "/home/orangepi/nfsshare/outputs/output.txt"
 
-    use_multiprocessing = False
+    use_multiprocessing = False #probably broken as of rn
 
     try:
         chunk_count = int(input("Number of chunks to sort: "))
@@ -114,6 +115,14 @@ if __name__ == "__main__":
     except:
         print("Not an integer")
         raise ValueError
+
+    try:
+        indices = get_chunk_indices(input_file, chunk_count, chunk_size, 0)
+        print("Reading " + str(indices[1]) + " bytes total")
+    except:
+        print("Reading more bytes than the file has (" + str(os.path.getsize(input_file)) + " bytes)")
+        print("Exiting program, try again")
+        exit(1)
 
 
 
@@ -129,6 +138,31 @@ if __name__ == "__main__":
         jobs.append(job)
 
     cluster.wait()
+    
+
+
+
+
+    #okay so the plan is
+    #comment the cluster.wait above so that i can start processing jobs as they come in
+    #probably try to find a way to process jobs as they come in 
+    #not just in order of when they were appended
+    #then pretty much combine each job output file one by one, writing to an output file each time to preserve memory
+    #and then gradually keep combining each file until done
+    #need to decide whether ill do a merge sort where i combine two job files at a time and then go from there
+    #or if ill just keep doing each job to a single file that constantly grows
+    #either way i also need to add some sort of memory overflow protection
+    #each node has 1gb of memory so i gotta try and add some protection that
+    #stops it from trying to take more (i think it causes a crash)
+    #also gotta balance jobs between nodes cuz everything is being sent to node2
+    #for whatever reason
+    #and i can try and make the nodes wait to read a file and execute a job
+    #only once there is enough memory free, allowing sending a million jobs
+    #but preventing memory overflow
+
+
+
+
 
     # print(jobs)
 
