@@ -5,6 +5,7 @@ outputs/*
 sorted_chunks/*
 !sorted_chunks/.gitkeep
 
+chunk_sort/job_outputs.txt
 System*Volume*Information/
 isos/
 *pycache*

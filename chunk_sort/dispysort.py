@@ -69,11 +69,13 @@ def dworker(filename, chunk_number, chunk_size, use_multiprocessing):
                 finallist.append(low_num)
                 sortedlists[low_index].pop(0)
         
-        #return finallist
-        
         with open("/home/orangepi/nfsshare/sorted_chunks/sorted_chunk_" + str(chunk_number) + ".txt", 'w') as file:
             for number in finallist:
                 file.write(f"{number}\n")
+
+        return chunk_number        
+
+
     
     else:
         n = len(numbers)
@@ -90,6 +92,8 @@ def dworker(filename, chunk_number, chunk_size, use_multiprocessing):
         with open("/home/orangepi/nfsshare/sorted_chunks/sorted_chunk_" + str(chunk_number) + ".txt", 'w') as file:
             for number in numbers:
                 file.write(f"{number}\n")
+
+        return chunk_number        
 
 
 
@@ -137,8 +141,40 @@ if __name__ == "__main__":
         job = cluster.submit(input_file, i + 1, chunk_size, use_multiprocessing)
         jobs.append(job)
 
-    cluster.wait()
-    
+    #cluster.wait()
+    with open("job_outputs.txt", "w") as file:
+        jobs_done = False
+        while not jobs_done:
+            length = len(jobs)
+            #print("not jobs_done")
+            if not length:
+            #jobs_done = True
+                break
+            for i in range(length - 1, -1, -1):
+                job = jobs[i]
+            #print(job.status)
+            if job.exception:
+                print(job.exception)
+                file.write(job.exception)
+            if job.status == dispy.DispyJob.Finished:
+                file.write(f"Job {job.id} is complete, chunk {job.result} should be done\n")
+                print(f"Job {job.id} is complete, chunk {job.result} should be done")
+                #process file early here
+                if last_chunk == 0:
+                    last_chunk = job.result
+                else:
+                    with open("/home/orangepi/nfsshare/sorted_chunks/sorted_chunk_" + str(last_chunk) + ".txt", 'r') as chunk1, open("/home/orangepi/nfsshare/sorted_chunks/sorted_chunk_" + str(job.result) + ".txt", 'r') as chunk2, open("/home/orangepi/nfsshare/sorted_chunks/layer_2_sorted_chunk_" + str(last_chunk) + ".txt", 'w'): #last file in list should be the one we r writing to
+                       pass #ill deal w this later lol 
+                jobs.pop(i)
+            elif job.status == dispy.DispyJob.Cancelled:
+                file.write(f"Job {job.id} was cancelled\n")
+                jobs.pop(i)
+            elif job.status == dispy.DispyJob.Terminated:
+                file.write(f"Job {job.id} was terminated\n")
+                jobs.pop(i)
+            elif job.status == dispy.DispyJob.Abandoned:
+                file.write(f"Job {job.id} was abandoned\n")
+                jobs.pop(i)
 
 
 
@@ -166,13 +202,13 @@ if __name__ == "__main__":
 
     # print(jobs)
 
-    for job in jobs:
-        # print(str(job) + " working")
-        job() # waits for job to finish and returns results
-        if job.exception:
-            print(job.exception)
-        # print('%s executed job %s at %s with %s' % (host, job.id, job.start_time, n))
-        #sorted_lists.append(job.result)
+    #for job in jobs:
+    #    # print(str(job) + " working")
+    #    job() # waits for job to finish and returns results
+    #    if job.exception:
+    #        print(job.exception)
+    #    # print('%s executed job %s at %s with %s' % (host, job.id, job.start_time, n))
+    #    #sorted_lists.append(job.result)
     
     cluster.print_status()
 
