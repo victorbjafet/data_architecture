@@ -144,6 +144,7 @@ if __name__ == "__main__":
     #cluster.wait()
     with open("job_outputs.txt", "w") as file:
         jobs_done = False
+        last_chunk = 0
         while not jobs_done:
             length = len(jobs)
             #print("not jobs_done")
@@ -163,8 +164,9 @@ if __name__ == "__main__":
                 if last_chunk == 0:
                     last_chunk = job.result
                 else:
-                    with open("/home/orangepi/nfsshare/sorted_chunks/sorted_chunk_" + str(last_chunk) + ".txt", 'r') as chunk1, open("/home/orangepi/nfsshare/sorted_chunks/sorted_chunk_" + str(job.result) + ".txt", 'r') as chunk2, open("/home/orangepi/nfsshare/sorted_chunks/layer_2_sorted_chunk_" + str(last_chunk) + ".txt", 'w'): #last file in list should be the one we r writing to
-                       pass #ill deal w this later lol 
+                    pass
+                    #with open("/home/orangepi/nfsshare/sorted_chunks/sorted_chunk_" + str(last_chunk) + ".txt", 'r') as chunk1, open("/home/orangepi/nfsshare/sorted_chunks/sorted_chunk_" + str(job.result) + ".txt", 'r') as chunk2, open("/home/orangepi/nfsshare/sorted_chunks/layer_2_sorted_chunk_" + str(last_chunk) + ".txt", 'w'): #last file in list should be the one we r writing to
+                    #   pass #ill deal w this later lol 
                 jobs.pop(i)
             elif job.status == dispy.DispyJob.Cancelled:
                 file.write(f"Job {job.id} was cancelled\n")
